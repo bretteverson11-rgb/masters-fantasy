@@ -20,6 +20,9 @@ const S = {
   payTitle: { fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#c9a84c', marginBottom: 6 },
   payText: { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 },
   payNote: { fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 6 },
+  editInfoBox: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px 14px', marginTop: 12 },
+  editInfoTitle: { fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 6 },
+  editInfoText: { fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 },
   card: { background: '#fff', borderRadius: 18, padding: '20px 18px', boxShadow: '0 2px 16px rgba(0,0,0,0.08)' },
   fieldLabel: { fontSize: 11, fontWeight: 800, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'block' },
   input: { width: '100%', border: '1.5px solid #ddd', borderRadius: 12, padding: '12px 14px', fontSize: 15, color: '#333', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
@@ -53,15 +56,6 @@ export default function Home() {
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(d => setLocked(d.locked))
-    const params = new URLSearchParams(window.location.search)
-    const editName = params.get('edit')
-    if (editName) {
-      setTeamName(editName)
-      fetch('/api/entries').then(r => r.json()).then(({ entries }) => {
-        const found = entries.find(e => e.nickname.toLowerCase() === editName.toLowerCase())
-        if (found) setPicks(found.picks)
-      })
-    }
   }, [])
 
   const handleTeamNameBlur = async () => {
@@ -150,15 +144,33 @@ export default function Home() {
               <div style={S.payText}>Send <strong style={S.gold}>$35</strong> via Interac e-Transfer to <strong style={S.gold}>bretteverson11@gmail.com</strong></div>
               <div style={S.payNote}>Include your <strong style={{color:'rgba(255,255,255,0.75)'}}>team name</strong> in the message</div>
             </div>
+            <div style={S.editInfoBox}>
+              <div style={S.editInfoTitle}>✏️ Need to edit your picks?</div>
+              <div style={S.editInfoText}>
+                Enter your team name below and your previous picks will load automatically. Make your changes and resubmit before the tournament starts Thursday morning.
+              </div>
+            </div>
           </div>
+
           <div style={S.card}>
             <div style={{marginBottom: 20}}>
               <label style={S.fieldLabel}>Team Name</label>
-              <input style={S.input} type="text" value={teamName} onChange={e => setTeamName(e.target.value)} onBlur={handleTeamNameBlur} placeholder="e.g. Team Everson" disabled={locked} />
+              <input
+                style={S.input}
+                type="text"
+                value={teamName}
+                onChange={e => setTeamName(e.target.value)}
+                onBlur={handleTeamNameBlur}
+                placeholder="e.g. Team Everson"
+                disabled={locked}
+              />
               {existingPicks && !locked && (
-                <button style={S.loadBtn} onClick={() => setPicks(existingPicks)}>Load your existing picks</button>
+                <button style={S.loadBtn} onClick={() => setPicks(existingPicks)}>
+                  ✓ Existing picks found — tap to load
+                </button>
               )}
             </div>
+
             <div style={{marginBottom: 20}}>
               <label style={S.fieldLabel}>Select Your Team</label>
               <div style={{color:'#aaa', fontSize:12, marginBottom:14}}>Pick 1 golfer from each tier · Top 5 of 6 scores count</div>
@@ -175,13 +187,16 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
             {error && <div style={S.error}>{error}</div>}
+
             {!locked && (
               <button style={{...S.submitBtn, opacity: loading ? 0.6 : 1}} onClick={handleSubmit} disabled={loading}>
                 {loading ? 'Saving...' : 'Submit My Picks ⛳️'}
               </button>
             )}
           </div>
+
           <Link href="/leaderboard" style={S.lbLink}>View Leaderboard →</Link>
         </div>
       </div>
