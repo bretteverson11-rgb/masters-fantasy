@@ -23,9 +23,9 @@ const S = {
   payoutPlace: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#fff', fontWeight: 600 },
   payoutPct: { fontSize: 11, color: 'rgba(255,255,255,0.4)' },
   payoutAmt: { fontSize: 14, fontWeight: 800, color: '#f0d080' },
-  hiddenBanner: { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '12px 16px', marginBottom: 16, textAlign: 'center' },
+  hiddenBanner: { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '14px 16px', marginBottom: 16, textAlign: 'center' },
   hiddenBannerText: { fontSize: 13, color: '#c9a84c', fontWeight: 700 },
-  hiddenBannerSub: { fontSize: 11, color: 'rgba(201,168,76,0.7)', marginTop: 4 },
+  hiddenBannerSub: { fontSize: 11, color: 'rgba(201,168,76,0.7)', marginTop: 4, lineHeight: 1.5 },
   empty: { background: '#fff', borderRadius: 18, padding: 32, textAlign: 'center', color: '#aaa', fontSize: 14 },
   card: (isFirst, locked) => ({ background: '#fff', borderRadius: 18, marginBottom: 10, overflow: 'hidden', border: (isFirst && locked) ? '1.5px solid #c9a84c' : '1.5px solid #e8e0d0', boxShadow: (isFirst && locked) ? '0 4px 20px rgba(201,168,76,0.15)' : 'none' }),
   cardBtn: { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', cursor: 'pointer', background: 'transparent', border: 'none', width: '100%', textAlign: 'left', fontFamily: 'inherit' },
@@ -43,7 +43,6 @@ const S = {
   detailTitle: { fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.2, color: '#aaa', marginBottom: 10 },
   cutPill: { background: '#fee2e2', color: '#dc2626', fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 20, marginRight: 4 },
   wdPill: { background: '#f3f4f6', color: '#6b7280', fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 20, marginRight: 4 },
-  editPickBtn: { display: 'block', background: 'none', border: '1.5px solid #1a5c38', color: '#1a5c38', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginTop: 12, fontFamily: 'inherit', textDecoration: 'none', textAlign: 'center', width: '100%', boxSizing: 'border-box' },
   nav: { display: 'flex', justifyContent: 'center', gap: 24, marginTop: 24, paddingBottom: 32 },
   navLink: { color: '#1a5c38', fontWeight: 700, fontSize: 13, textDecoration: 'none' },
   navBtn: { background: 'none', border: 'none', color: '#aaa', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' },
@@ -92,7 +91,6 @@ export default function Leaderboard() {
     return () => clearInterval(iv)
   }, [fetchData])
 
-  // Before lock: sort alphabetically. After lock: sort by score.
   const ranked = locked
     ? entries
         .map(e => ({ ...e, ...calcTeamScore(e.picks, scoresMap) }))
@@ -123,8 +121,6 @@ export default function Leaderboard() {
         </div>
 
         <div style={S.body}>
-
-          {/* Payout banner */}
           <div style={S.payoutCard}>
             <div style={S.payoutTitle}>💰 Prize Pool · {entries.length} Entries · ${entries.length * ENTRY_FEE} Pot</div>
             {[['🥇','1st Place',0],['🥈','2nd Place',1],['🥉','3rd Place',2]].map(([medal,place,idx]) => (
@@ -136,97 +132,85 @@ export default function Leaderboard() {
             ))}
           </div>
 
-          {/* Hidden picks banner */}
           {!locked && (
             <div style={S.hiddenBanner}>
               <div style={S.hiddenBannerText}>🔐 Picks are hidden until the tournament starts</div>
-              <div style={S.hiddenBannerSub}>Golfer selections will be revealed when picks are locked Thursday</div>
+              <div style={S.hiddenBannerSub}>
+                Team names and payment status are shown below.{'\n'}
+                Golfer selections will be revealed when picks lock Thursday morning.
+              </div>
             </div>
           )}
 
           {ranked.length === 0 ? (
             <div style={S.empty}>No picks submitted yet.</div>
           ) : (
-            ranked.map((entry, i) => {
-              const showScore = locked
-              const rank = locked ? i : null
+            ranked.map((entry, i) => (
+              <div key={entry.nickname} style={S.card(i===0, locked)}>
+                <button
+                  style={{...S.cardBtn, cursor: locked ? 'pointer' : 'default'}}
+                  onClick={() => locked && setExpanded(expanded === entry.nickname ? null : entry.nickname)}
+                >
+                  <div style={S.rank}>
+                    {locked
+                      ? (i < 3 ? medals[i] : <span style={S.rankNum}>{i+1}</span>)
+                      : <span style={{fontSize:14, color:'#ccc'}}>—</span>
+                    }
+                  </div>
 
-              return (
-                <div key={entry.nickname} style={S.card(i===0, locked)}>
-                  <button
-                    style={S.cardBtn}
-                    onClick={() => !locked ? null : setExpanded(expanded === entry.nickname ? null : entry.nickname)}
-                  >
-                    {/* Rank — only show when locked */}
-                    <div style={S.rank}>
-                      {locked
-                        ? (i < 3 ? medals[i] : <span style={S.rankNum}>{i+1}</span>)
-                        : <span style={{fontSize:14, color:'#ccc'}}>—</span>
+                  <div style={S.nameWrap}>
+                    {/* Hide team names before lock */}
+                    <div style={S.name}>
+                      {locked ? entry.nickname : `Player ${i + 1}`}
+                    </div>
+                    <div style={{display:'flex', gap:6, flexWrap:'wrap', marginTop:3}}>
+                      {entry.paid === false
+                        ? <span style={S.owesBadge}>💸 Owes $</span>
+                        : <span style={S.paidBadge}>✓ Paid</span>
                       }
+                      {!locked && (
+                        <span style={S.pickCountBadge}>✓ {entry.picks?.length || 0} picks submitted</span>
+                      )}
                     </div>
+                  </div>
 
-                    <div style={S.nameWrap}>
-                      <div style={S.name}>{entry.nickname}</div>
-                      <div style={{display:'flex', gap:6, flexWrap:'wrap', marginTop:3}}>
-                        {entry.paid === false
-                          ? <span style={S.owesBadge}>💸 Owes $</span>
-                          : <span style={S.paidBadge}>✓ Paid</span>
-                        }
-                        {!locked && (
-                          <span style={S.pickCountBadge}>✓ {entry.picks?.length || 0} picks submitted</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Score — only show when locked */}
-                    {locked && (
-                      <div style={S.scoreWrap}>
-                        <div style={{fontSize:20, fontWeight:900, color:scoreColor(entry.total)}}>{fmt(entry.total)}</div>
-                        {i < 3 && pot > 0 && <div style={S.prize}>${Math.round(pot * PAYOUT[i])}</div>}
-                      </div>
-                    )}
-
-                    {locked && <span style={S.chevron}>{expanded === entry.nickname ? '▲' : '▼'}</span>}
-                  </button>
-
-                  {/* Edit button — only show when NOT locked */}
-                  {!locked && (
-                    <div style={{padding: '0 16px 12px'}}>
-                      <Link href={`/?edit=${encodeURIComponent(entry.nickname)}`} style={S.editPickBtn}>
-                        ✏️ Edit My Picks
-                      </Link>
+                  {locked && (
+                    <div style={S.scoreWrap}>
+                      <div style={{fontSize:20, fontWeight:900, color:scoreColor(entry.total)}}>{fmt(entry.total)}</div>
+                      {i < 3 && pot > 0 && <div style={S.prize}>${Math.round(pot * PAYOUT[i])}</div>}
                     </div>
                   )}
 
-                  {/* Expanded detail — only when locked */}
-                  {locked && expanded === entry.nickname && (
-                    <div style={S.detail}>
-                      <div style={S.detailTitle}>Team Picks</div>
-                      {entry.scores.sort((a,b) => a.score - b.score).map((s) => {
-                        const dropped = entry.dropped?.name === s.name
-                        return (
-                          <div key={s.name} style={{display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, color: dropped?'#bbb':'#555', padding:'4px 0', borderBottom:'1px solid #ebe4d8', textDecoration: dropped?'line-through':'none'}}>
-                            <span>
-                              {s.status==='cut' && <span style={S.cutPill}>CUT</span>}
-                              {s.status==='wd' && <span style={S.wdPill}>WD</span>}
-                              {s.name}
-                            </span>
-                            <div style={{display:'flex', alignItems:'center', gap:6}}>
-                              <span style={{fontWeight:700, color:scoreColor(s.score)}}>{fmt(s.score)}</span>
-                              {dropped && <span style={{fontSize:11,color:'#bbb'}}>(dropped)</span>}
-                            </div>
+                  {locked && <span style={S.chevron}>{expanded === entry.nickname ? '▲' : '▼'}</span>}
+                </button>
+
+                {locked && expanded === entry.nickname && (
+                  <div style={S.detail}>
+                    <div style={S.detailTitle}>Team Picks</div>
+                    {entry.scores.sort((a,b) => a.score - b.score).map((s) => {
+                      const dropped = entry.dropped?.name === s.name
+                      return (
+                        <div key={s.name} style={{display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, color: dropped?'#bbb':'#555', padding:'4px 0', borderBottom:'1px solid #ebe4d8', textDecoration: dropped?'line-through':'none'}}>
+                          <span>
+                            {s.status==='cut' && <span style={S.cutPill}>CUT</span>}
+                            {s.status==='wd' && <span style={S.wdPill}>WD</span>}
+                            {s.name}
+                          </span>
+                          <div style={{display:'flex', alignItems:'center', gap:6}}>
+                            <span style={{fontWeight:700, color:scoreColor(s.score)}}>{fmt(s.score)}</span>
+                            {dropped && <span style={{fontSize:11,color:'#bbb'}}>(dropped)</span>}
                           </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ))
           )}
 
           <div style={S.nav}>
-            <Link href="/" style={S.navLink}>← Submit Picks</Link>
+            <Link href="/" style={S.navLink}>← Submit / Edit Picks</Link>
             <button style={S.navBtn} onClick={fetchData}>↻ Refresh</button>
           </div>
         </div>
