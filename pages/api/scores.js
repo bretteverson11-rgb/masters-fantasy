@@ -100,8 +100,12 @@ export default async function handler(req, res) {
       }
     })
 
-    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=60')
-    res.status(200).json({ scoresMap, lastUpdated: new Date().toISOString() })
+res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=60')
+res.status(200).json({ 
+  scoresMap, 
+  lastUpdated: new Date().toISOString(),
+  debug_names: players.map(p => p.Name || `${p.FirstName} ${p.LastName}`)
+})
 
   } catch (err) {
     console.error('Scores API error:', err)
