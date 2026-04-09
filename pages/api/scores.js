@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       const isWD = p.IsWithdrawn || p.Status === 'W'
       const isDQ = p.Status === 'DQ'
 
-      let score = p.TotalScore ?? p.ScoreToPar ?? p.TotalToPar ?? 0
+      let score = Math.round(p.TotalScore ?? p.ScoreToPar ?? p.TotalToPar ?? 0)
 
       if (isCut && !isWD && !isDQ) {
         const roundsPlayed = (p.Rounds || []).filter(r => r.Strokes > 0).length
