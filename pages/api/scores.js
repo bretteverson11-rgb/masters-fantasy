@@ -1,5 +1,5 @@
 const API_KEY = process.env.SPORTSDATA_API_KEY
-const TOURNAMENT_ID = '510'
+const TOURNAMENT_ID = '688'
 
 export default async function handler(req, res) {
   try {
